@@ -1,11 +1,15 @@
 from flask import Flask
 from routes.Predict import predict_bp
+from routes.Parking import parking_bp
 
 app = Flask(__name__)
 
 # ====================================================================================
 # for backend-routes-Predict : predict for Epic 1 population and car amount
 app.register_blueprint(predict_bp, url_prefix="/api")  # final route: POST /api/predict
+
+# for backend-routes-Parking
+app.register_blueprint(parking_bp, url_prefix="/api") # final route: POST /api/available-parking
 # ====================================================================================
 
 
