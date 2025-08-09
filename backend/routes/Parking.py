@@ -107,9 +107,28 @@ def available_parking():
                 "available_spots": available_spots,
                 "distribution": rows
             })
+     
+        
+           
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
     finally:
         conn.close()
+        
+    
+"""
+   sample output:
+   
+           {
+           "total_spots": 45,
+           "available_spots": 16,
+           "distribution": [
+               {"street": "Elm St", "total_spots": 10, "available_spots": 3},
+               {"street": "Oak St", "total_spots": 15, "available_spots": 5},
+               {"street": "Pine St", "total_spots": 20, "available_spots": 8}
+           ]
+       }
+    
+"""
