@@ -1,6 +1,36 @@
+import os
 import numpy as np
 import pandas as pd
 from joblib import load
+
+_POP_MODEL = None
+
+def _resolve_model_path():
+    here = os.path.dirname(os.path.abspath(__file__))
+
+    # from recent folder
+    p0 = os.path.join(here, "linear_VIC.joblib")
+    if os.path.exists(p0):
+        return p0
+
+    # if not in recent folder then add model/models
+    parent = os.path.dirname(here)
+    p1 = os.path.join(parent, "model", "linear_VIC.joblib")
+    p2 = os.path.join(parent, "models", "linear_VIC.joblib")
+    if os.path.exists(p1):
+        return p1
+    if os.path.exists(p2):
+        return p2
+
+    raise FileNotFoundError(f"Model not found. Tried:\n - {p0}\n - {p1}\n - {p2}")
+
+def _get_model():
+    global _POP_MODEL
+    if _POP_MODEL is None:
+        path = _resolve_model_path()
+        print(f">> Loading model: {path}", flush=True)
+        _POP_MODEL = load(path)
+    return _POP_MODEL
 
 def predict_vehicles(future_years):
     """
@@ -22,12 +52,11 @@ def predict_vehicles(future_years):
         Average vehicles-per-person ratio used for prediction
     """
     # ==== Fixed settings ====
-    pop_model_path = r"models/linear_VIC.joblib"
     hist_years = np.array([2016, 2017, 2018, 2019, 2020])
     hist_vehicles = np.array([209495, 214408, 236429, 215728, 188855], dtype=float)
 
     # Load population model
-    pop_model = load(pop_model_path)
+    pop_model = _get_model()
 
     # Reverse simulate historical population
     hist_pop = pop_model.predict(hist_years.reshape(-1, 1))
