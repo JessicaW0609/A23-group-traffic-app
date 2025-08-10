@@ -4,131 +4,122 @@ from db.connect import get_db_connection
 
 parking_bp = Blueprint("parking", __name__)
 
-@parking_bp.route("/available-parking", methods=["POST"])                     # connect to the frontend
-
+@parking_bp.route("/available-parking", methods=["POST"])
 def available_parking():
     """
     Get available parking spots in a given location.
     Expected JSON: {"lat": ..., "lng": ...} or {"suburb": "..."}
     """
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
     lat = data.get("lat")
     lng = data.get("lng")
-    suburb = data.get("suburb")                                              # get user input
+    suburb = data.get("suburb")
 
-    if not (suburb or (lat and lng)):
-        return jsonify({"error": "Missing location data"}), 400
     
-    """
-    set up the database connection
-    """
+    if not (suburb or (lat is not None and lng is not None)):
+        return jsonify({"error": "Missing location data"}), 400
 
+    
     conn = get_db_connection()
-
     if not conn:
         return jsonify({"error": "Database connection failed"}), 500
-    
-    """
-    get the available parking spots in the database
-    """
 
     try:
         with conn.cursor() as cursor:
             if suburb:
-                # Street-name search using ERD tables. Treat "suburb" as a fuzzy street filter.
+                
                 sql = """
                 WITH latest_status AS (
                     SELECT
-                        pbs."Kerbside_ID",
-                        pbs."Status_Description",
+                        pbs.kerbside_id,
+                        pbs.status_description,
                         ROW_NUMBER() OVER (
-                            PARTITION BY pbs."Kerbside_ID"
-                            ORDER BY pbs."Status_Timestamp" DESC
+                            PARTITION BY pbs.kerbside_id
+                            ORDER BY pbs.status_timestamp DESC
                         ) AS rn
-                    FROM "ParkingbaySensor" pbs
+                    FROM parkingbaysensor pbs
                 )
                 SELECT
-                    COALESCE(rs."OnStreet", 'Unknown') AS street,
-                    COUNT(DISTINCT si."Kerbside_ID") AS total_spots,
-                    SUM(CASE WHEN ls."Status_Description" IN ('Unoccupied','Available','Free') THEN 1 ELSE 0 END) AS available_spots
-                FROM "SensorInfo" si
+                    COALESCE(rs.onstreet, 'Unknown') AS street,
+                    COUNT(DISTINCT si.kerbside_id) AS total_spots,
+                    SUM(CASE
+                        WHEN ls.status_description IN ('Unoccupied','Available','Free') THEN 1
+                        ELSE 0
+                    END) AS available_spots
+                FROM sensorinfo si
                 LEFT JOIN latest_status ls
-                    ON ls."Kerbside_ID" = si."Kerbside_ID" AND ls.rn = 1
-                LEFT JOIN "ParkingZone_Street" pzs
-                    ON pzs."ParkingZone_ID" = si."ParkingZone_ID"
-                LEFT JOIN "RoadSegment" rs
-                    ON rs."RoadSegment_ID" = pzs."RoadSegment_ID"
-                WHERE rs."OnStreet" ILIKE %s OR rs."RoadSegmentDescription" ILIKE %s
+                    ON ls.kerbside_id = si.kerbside_id AND ls.rn = 1
+                LEFT JOIN parkingzone_street pzs
+                    ON pzs.parkingzone_id = si.parkingzone_id
+                LEFT JOIN roadsegment rs
+                    ON rs.roadsegment_id = pzs.roadsegment_id
+                WHERE rs.onstreet ILIKE %s
+                   OR rs.roadsegmentdescription ILIKE %s
                 GROUP BY street
                 ORDER BY street;
                 """
                 cursor.execute(sql, (f"%{suburb}%", f"%{suburb}%"))
             else:
-                # Radius search in meters using PostGIS
+                
                 sql = """
                 WITH latest_status AS (
                     SELECT
-                        pbs."Kerbside_ID",
-                        pbs."Status_Description",
+                        pbs.kerbside_id,
+                        pbs.status_description,
                         ROW_NUMBER() OVER (
-                            PARTITION BY pbs."Kerbside_ID"
-                            ORDER BY pbs."Status_Timestamp" DESC
+                            PARTITION BY pbs.kerbside_id
+                            ORDER BY pbs.status_timestamp DESC
                         ) AS rn
-                    FROM "ParkingbaySensor" pbs
+                    FROM parkingbaysensor pbs
                 )
                 SELECT
-                    COALESCE(rs."OnStreet", 'Unknown') AS street,
-                    COUNT(DISTINCT si."Kerbside_ID") AS total_spots,
-                    SUM(CASE WHEN ls."Status_Description" IN ('Unoccupied','Available','Free') THEN 1 ELSE 0 END) AS available_spots
-                FROM "SensorInfo" si
+                    COALESCE(rs.onstreet, 'Unknown') AS street,
+                    COUNT(DISTINCT si.kerbside_id) AS total_spots,
+                    SUM(CASE
+                        WHEN ls.status_description IN ('Unoccupied','Available','Free') THEN 1
+                        ELSE 0
+                    END) AS available_spots
+                FROM sensorinfo si
                 LEFT JOIN latest_status ls
-                    ON ls."Kerbside_ID" = si."Kerbside_ID" AND ls.rn = 1
-                LEFT JOIN "ParkingZone_Street" pzs
-                    ON pzs."ParkingZone_ID" = si."ParkingZone_ID"
-                LEFT JOIN "RoadSegment" rs
-                    ON rs."RoadSegment_ID" = pzs."RoadSegment_ID"
+                    ON ls.kerbside_id = si.kerbside_id AND ls.rn = 1
+                LEFT JOIN parkingzone_street pzs
+                    ON pzs.parkingzone_id = si.parkingzone_id
+                LEFT JOIN roadsegment rs
+                    ON rs.roadsegment_id = pzs.roadsegment_id
                 WHERE ST_DWithin(
-                    geography(ST_SetSRID(ST_MakePoint(si."Longitude", si."Latitude"), 4326)),
+                    geography(ST_SetSRID(ST_MakePoint(si.longitude, si.latitude), 4326)),
                     geography(ST_SetSRID(ST_MakePoint(%s, %s), 4326)),
                     2000
                 )
                 GROUP BY street
                 ORDER BY street;
                 """
-                cursor.execute(sql, (lng, lat))
+                
+                cursor.execute(sql, (float(lng), float(lat)))
 
-            rows = cursor.fetchall()
+            rows = cursor.fetchall() or []
 
-            total_spots = sum(row["total_spots"] for row in rows)
-            available_spots = sum(row["available_spots"] for row in rows)
+            
+            total_spots = sum((r.get("total_spots") or 0) for r in rows)
+            available_spots = sum((r.get("available_spots") or 0) for r in rows)
 
             return jsonify({
-                "total_spots": total_spots,
-                "available_spots": available_spots,
-                "distribution": rows
-            })
-     
-        
-           
+                "total_spots": int(total_spots),
+                "available_spots": int(available_spots),
+                "distribution": [
+                    {
+                        "street": r.get("street") or "Unknown",
+                        "total_spots": int(r.get("total_spots") or 0),
+                        "available_spots": int(r.get("available_spots") or 0),
+                    }
+                    for r in rows
+                ],
+            }), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
     finally:
-        conn.close()
-        
-    
-"""
-   sample output:
-   
-           {
-           "total_spots": 45,
-           "available_spots": 16,
-           "distribution": [
-               {"street": "Elm St", "total_spots": 10, "available_spots": 3},
-               {"street": "Oak St", "total_spots": 15, "available_spots": 5},
-               {"street": "Pine St", "total_spots": 20, "available_spots": 8}
-           ]
-       }
-    
-"""
+        try:
+            conn.close()
+        except Exception:
+            pass

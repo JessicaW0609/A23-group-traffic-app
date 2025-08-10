@@ -65,7 +65,7 @@ def predict():
             if not (2000 <= y <= 2100):
                 return jsonify({"error": f"Year out of range: {y}"}), 400
 
-        # remove duplicates, sort，avoid re-compute
+        # remove duplicates, sort,avoid re-compute
         years = sorted(set(years))
 
         forecast_df, avg_ratio = predict_vehicles(years)

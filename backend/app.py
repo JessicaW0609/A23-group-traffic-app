@@ -14,6 +14,7 @@ app.register_blueprint(predict_bp, url_prefix="/api")  # final route: POST /api/
 app.register_blueprint(parking_bp, url_prefix="/api")
 
 
+
 @app.route('/')
 def hello():
     return 'Hello from Jessica!'
