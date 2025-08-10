@@ -3,7 +3,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 // ----- Config -----
 // 
-const API_BASE = "/api"; // same-origin by default
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
+
 
 // ----- Utils -----
 async function postJSON(path, body) {

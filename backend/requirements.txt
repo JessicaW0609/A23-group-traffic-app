@@ -1,7 +1,18 @@
-Flask
-python-dotenv
-psycopg2-binary
-scikit-learn
-joblib
-numpy
-pandas
+# Web framework
+Flask==3.0.3
+flask-cors==5.0.0
+
+# WSGI server (production)
+gunicorn==22.0.0
+
+# Config / env
+python-dotenv==1.0.1
+
+# Database
+psycopg2-binary==2.9.9
+
+# Data / ML stack 
+numpy==1.26.4
+pandas==2.2.2
+scikit-learn==1.4.2
+joblib==1.4.2
