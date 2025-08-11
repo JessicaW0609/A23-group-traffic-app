@@ -1,10 +1,10 @@
-# backend/routes/parking.py
 from flask import Blueprint, request, jsonify
 from db.connect import get_db_connection
 
 parking_bp = Blueprint("parking", __name__)
 
 @parking_bp.route("/available-parking", methods=["POST"])
+
 def available_parking():
     """
     Get available parking spots in a given location.
@@ -26,6 +26,10 @@ def available_parking():
 
     try:
         with conn.cursor() as cursor:
+
+            """use sql query to search for available spot basic on provided information ( suburb or coordinate )"""
+
+
             if suburb:
                 
                 sql = """
@@ -59,6 +63,7 @@ def available_parking():
                 ORDER BY street;
                 """
                 cursor.execute(sql, (f"%{suburb}%", f"%{suburb}%"))
+                
             else:
                 
                 sql = """
