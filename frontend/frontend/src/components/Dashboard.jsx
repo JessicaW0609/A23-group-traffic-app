@@ -1,17 +1,6 @@
 // src/components/Dashboard.jsx
 import React, { useMemo, useState, useEffect } from "react";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  Line,
-  LineChart,
-} from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, LineChart, Legend, Brush } from "recharts";
 
 
 // your UI atoms
@@ -69,7 +58,7 @@ function downloadCSV(filename, rows) {
 
 // ====== App root ======
 export default function Dashboard() {
-  // 不再依赖 useNavigate，完全用原生方式保证可用
+
   const goBack = () => {
     const before = window.location.href;
     // 1) try native back
@@ -77,7 +66,7 @@ export default function Dashboard() {
     // 2) fallback: still same URL? go home
     setTimeout(() => {
       if (window.location.href === before) {
-        window.location.assign("/"); // 强制回到首页
+        window.location.assign("/"); 
       }
     }, 150);
   };
@@ -139,6 +128,15 @@ export default function Dashboard() {
 
 
 // ====== Availability Panel (unchanged logic; polished UI) ======
+// shorten long street names for ticks
+const shortStreet = (s) => {
+  if (!s) return "";
+  // remove common suffixes to save space
+  const trimmed = s.replace(/\b(Street|St|Road|Rd|Lane|Ln|Drive|Dr|Avenue|Ave)\b\.?/gi, "").trim();
+  const label = trimmed || s;
+  return label.length > 12 ? label.slice(0, 12) + "…" : label;
+};
+
 function AvailabilityPanel() {
   const [mode, setMode] = useState("suburb"); // suburb | coords
   const [suburb, setSuburb] = useState("");
@@ -326,50 +324,69 @@ function AvailabilityPanel() {
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data.distribution || []}
-          margin={{ top: 10, right: 20, left: 0, bottom: 30 }}
-          barSize={14}                 // fix bar width
-          barCategoryGap="18%"         // keep spacing consistent
+          margin={{ top: 10, right: 20, left: 0, bottom: 80 }}
         >
-          <CartesianGrid
-            stroke="rgba(255,255,255,0.18)"
-            strokeDasharray="3 3"
-          />
+          <CartesianGrid stroke="rgba(255,255,255,0.18)" strokeDasharray="3 3" />
+
+          {/* smart skipping + shorter labels */}
           <XAxis
             dataKey="street"
-            angle={-20}
+            height={80}
+            angle={-35}
             textAnchor="end"
-            height={60}
-            interval={0}
+            interval="preserveStartEnd"
+            tickFormatter={shortStreet}
+            tick={{ fontSize: 11 }}
           />
+
           <YAxis tickFormatter={numberFmt} />
+
           <Tooltip
             formatter={(v) => numberFmt(v)}
-            contentStyle={{
-              background: "rgba(15,23,42,0.8)",
-              border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: 10,
-            }}
+            labelFormatter={(l) => l}
+            contentStyle={{ background: "rgba(15,23,42,0.8)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10 }}
             labelStyle={{ color: "#fff" }}
             itemStyle={{ color: "#fff" }}
           />
           <Legend wrapperStyle={{ color: "#cbd5e1" }} />
 
-          {/* Put Available first so legend order is intuitive */}
-          <Bar
-            dataKey="available_spots"
-            name="Available"
-            fill="#10b981"                         // green
-            stroke="#10b981"
-            legendType="circle"
-            radius={[4, 4, 0, 0]}
-          />
+          {/* gradients for bar colors */}
+          <defs>
+            {/* Available: green */}
+            <linearGradient id="gradAvailable" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"  stopColor="rgba(16,185,129,0.95)" />
+              <stop offset="100%" stopColor="rgba(16,185,129,0.55)" />
+            </linearGradient>
+            {/* Total: slate/gray */}
+            <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"  stopColor="rgba(203,213,225,0.85)" />
+              <stop offset="100%" stopColor="rgba(148,163,184,0.55)" />
+            </linearGradient>
+          </defs>
+
+          {/* draw Total first, then Available to keep green in front */}
           <Bar
             dataKey="total_spots"
             name="Total"
-            fill="rgba(148,163,184,0.6)"           // slate-400 (semi)
-            stroke="rgba(148,163,184,0.9)"
-            legendType="circle"
+            fill="url(#gradTotal)"
             radius={[4, 4, 0, 0]}
+            barSize={12}
+          />
+          <Bar
+            dataKey="available_spots"
+            name="Available"
+            fill="url(#gradAvailable)"
+            radius={[4, 4, 0, 0]}
+            barSize={12}
+          />
+
+          {/* allow horizontal pan/zoom when many streets */}
+          <Brush
+            dataKey="street"
+            height={24}
+            stroke="rgba(255,255,255,0.25)"
+            fill="rgba(255,255,255,0.05)"
+            travellerWidth={10}
           />
         </BarChart>
       </ResponsiveContainer>
@@ -380,6 +397,7 @@ function AvailabilityPanel() {
     )}
   </div>
 </Card>
+
 
           {/* Table */}
           <Card className="md:col-span-12">
