@@ -17,7 +17,7 @@ export default function LandingHero({ onPrimary }) {
           {/* 左侧文案 */}
           <div className="space-y-6">
             <h1 className="text-4xl md:text-6xl font-extrabold leading-[1.1] text-white tracking-tight">
-              Smarter Cities<br/>Start with{" "}
+              Smarter City<br/>Start with{" "}
               <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-indigo-400 bg-clip-text text-transparent">Smarter Parking</span>
             </h1>
             <p className="max-w-xl text-slate-300">AI-powered predictions for seamless urban mobility. Turn parking from frustration into fluid city flow.</p>

@@ -91,7 +91,7 @@ export default function Dashboard() {
               onClick={goBack}
               className="rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 px-4 py-2 text-sm"
             >
-              ← Back to Home
+              &lt;- Back to Home
             </Button>
           </div>
         </header>
@@ -134,7 +134,7 @@ const shortStreet = (s) => {
   // remove common suffixes to save space
   const trimmed = s.replace(/\b(Street|St|Road|Rd|Lane|Ln|Drive|Dr|Avenue|Ave)\b\.?/gi, "").trim();
   const label = trimmed || s;
-  return label.length > 12 ? label.slice(0, 12) + "…" : label;
+  return label.length > 12 ? label.slice(0, 12) + "..." : label;
 };
 
 function AvailabilityPanel() {
@@ -222,7 +222,7 @@ function AvailabilityPanel() {
             <div className="flex flex-wrap items-center gap-4">
               <label className="flex items-center gap-2">
                 <input type="radio" name="amode" value="suburb" checked={mode === "suburb"} onChange={() => setMode("suburb")} />
-                <span>Street keyword</span>
+                <span>Street </span>
               </label>
               <label className="flex items-center gap-2">
                 <input type="radio" name="amode" value="coords" checked={mode === "coords"} onChange={() => setMode("coords")} />
@@ -234,7 +234,7 @@ function AvailabilityPanel() {
           {mode === "suburb" ? (
             <div className="md:col-span-6">
               <label className="mb-1 block text-sm font-medium" htmlFor="suburb">
-                Street keyword
+                Street 
               </label>
               <Input
                 id="suburb"
@@ -399,39 +399,6 @@ function AvailabilityPanel() {
 </Card>
 
 
-          {/* Table */}
-          <Card className="md:col-span-12">
-            <div className="mb-2 text-lg font-semibold">Table</div>
-            {hasRows ? (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-white/10 bg-white/5 text-left">
-                      <th className="p-2">Street</th>
-                      <th className="p-2">Total</th>
-                      <th className="p-2">Available</th>
-                      <th className="p-2">Availability %</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {(data.distribution || []).map((row, idx) => {
-                      const pct = row.total_spots > 0 ? (row.available_spots / row.total_spots) * 100 : 0;
-                      return (
-                        <tr key={idx} className="border-b border-white/10">
-                          <td className="p-2">{row.street}</td>
-                          <td className="p-2">{numberFmt(row.total_spots)}</td>
-                          <td className="p-2">{numberFmt(row.available_spots)}</td>
-                          <td className="p-2">{pct.toFixed(1)}%</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-sm text-slate-400">No data.</div>
-            )}
-          </Card>
         </div>
       )}
     </div>
@@ -593,7 +560,7 @@ function PredictionPanel() {
       <Card>
         <div className="mb-3">
           <h2 className="text-lg font-semibold">Predict Population & Vehicles</h2>
-          <p className="text-sm text-slate-400">Choose an input mode below. Valid years: 2000–2100.</p>
+          <p className="text-sm text-slate-400">Choose an input mode below. Valid years: 2000-2100.</p>
         </div>
 
         {/* mode selector */}
