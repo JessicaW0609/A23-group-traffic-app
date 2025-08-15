@@ -1,7 +1,7 @@
 // src/components/Dashboard.jsx
 import React, { useMemo, useState, useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Line, LineChart, Legend, Brush } from "recharts";
-
+import StreetAvailabilityMap from "./UI/StreetAvailabilityMap";
 
 // your UI atoms
 import { useNavigate } from "react-router-dom"; 
@@ -304,10 +304,10 @@ function AvailabilityPanel() {
             </div>
           </Card>
 
-          {/* Chart */}
+{/* Map (replaces Bar Chart) */}
 <Card className="md:col-span-12">
   <div className="mb-2 flex items-center justify-between">
-    <div className="text-lg font-semibold">By Street</div>
+    <div className="text-lg font-semibold">Map by Street</div>
     {hasRows && (
       <Button
         variant="ghost"
@@ -319,77 +319,9 @@ function AvailabilityPanel() {
     )}
   </div>
 
-  <div className="h-[360px]">
+  <div className="h-[480px]">
     {hasRows ? (
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={data.distribution || []}
-          margin={{ top: 10, right: 20, left: 0, bottom: 80 }}
-        >
-          <CartesianGrid stroke="rgba(255,255,255,0.18)" strokeDasharray="3 3" />
-
-          {/* smart skipping + shorter labels */}
-          <XAxis
-            dataKey="street"
-            height={80}
-            angle={-35}
-            textAnchor="end"
-            interval="preserveStartEnd"
-            tickFormatter={shortStreet}
-            tick={{ fontSize: 11 }}
-          />
-
-          <YAxis tickFormatter={numberFmt} />
-
-          <Tooltip
-            formatter={(v) => numberFmt(v)}
-            labelFormatter={(l) => l}
-            contentStyle={{ background: "rgba(15,23,42,0.8)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 10 }}
-            labelStyle={{ color: "#fff" }}
-            itemStyle={{ color: "#fff" }}
-          />
-          <Legend wrapperStyle={{ color: "#cbd5e1" }} />
-
-          {/* gradients for bar colors */}
-          <defs>
-            {/* Available: green */}
-            <linearGradient id="gradAvailable" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"  stopColor="rgba(16,185,129,0.95)" />
-              <stop offset="100%" stopColor="rgba(16,185,129,0.55)" />
-            </linearGradient>
-            {/* Total: slate/gray */}
-            <linearGradient id="gradTotal" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"  stopColor="rgba(203,213,225,0.85)" />
-              <stop offset="100%" stopColor="rgba(148,163,184,0.55)" />
-            </linearGradient>
-          </defs>
-
-          {/* draw Total first, then Available to keep green in front */}
-          <Bar
-            dataKey="total_spots"
-            name="Total"
-            fill="url(#gradTotal)"
-            radius={[4, 4, 0, 0]}
-            barSize={12}
-          />
-          <Bar
-            dataKey="available_spots"
-            name="Available"
-            fill="url(#gradAvailable)"
-            radius={[4, 4, 0, 0]}
-            barSize={12}
-          />
-
-          {/* allow horizontal pan/zoom when many streets */}
-          <Brush
-            dataKey="street"
-            height={24}
-            stroke="rgba(255,255,255,0.25)"
-            fill="rgba(255,255,255,0.05)"
-            travellerWidth={10}
-          />
-        </BarChart>
-      </ResponsiveContainer>
+      <StreetAvailabilityMap results={data.distribution || []} />
     ) : (
       <div className="flex h-full items-center justify-center text-sm text-slate-400">
         No streets returned for this query.
