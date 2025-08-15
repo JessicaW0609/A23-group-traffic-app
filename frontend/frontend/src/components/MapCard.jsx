@@ -199,7 +199,7 @@ function HeatLayer({ points = [], options = {} }) {
 
     // 随缩放变化半径
     const baseZoom = 13,
-      base = 28;
+      base = 20;
     const radiusForZoom = (z) =>
       Math.max(12, Math.round(base * Math.pow(1.2, z - baseZoom)));
 
@@ -327,20 +327,22 @@ export default function MapCard({
         </div>
 
         {/* 左下角图例 */}
-        {legend && (
-          <div className="pointer-events-none absolute left-4 bottom-6 z-[2000] rounded-xl bg-black/70 text-slate-100 text-xs px-3 py-2 border border-white/10 shadow">
-            <div className="font-medium mb-1">Parking Availability</div>
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-rose-500" /> High
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-amber-400" /> Medium
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" /> Low
-            </div>
-          </div>
-        )}
+        {/* 左下角图例 */}
+{legend && (
+  <div className="pointer-events-none absolute left-4 bottom-6 z-[2000] rounded-xl bg-black/70 text-slate-100 text-xs px-3 py-2 border border-white/10 shadow">
+    <div className="font-medium mb-1">Parking Pressure (hotter = busier)</div>
+    <div className="flex items-center gap-2">
+      <span className="h-2 w-2 rounded-full bg-rose-500" /> High (low availability)
+    </div>
+    <div className="flex items-center gap-2">
+      <span className="h-2 w-2 rounded-full bg-amber-400" /> Medium
+    </div>
+    <div className="flex items-center gap-2">
+      <span className="h-2 w-2 rounded-full bg-emerald-400" /> Low (more spaces)
+    </div>
+  </div>
+)}
+
 
 
      
